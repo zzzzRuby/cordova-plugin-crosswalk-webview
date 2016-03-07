@@ -28,6 +28,9 @@ repositories {
   maven {
     url 'https://download.01.org/crosswalk/releases/crosswalk/android/maven2'
   }
+  maven {
+    url 'https://download.01.org/crosswalk/releases/crosswalk-lite/android/maven2'
+  }
 }
 
 def getConfigPreference(name) {
