@@ -25,13 +25,20 @@ module.exports = function(context) {
             'platforms', 'android'),
         projectConfigurationFile = path.join(context.opts.projectRoot,
             'config.xml'),
-        platformConfigurationFile = path.join(androidPlatformDir,
-            'res', 'xml', 'config.xml'),
+        platformConfigurationFile,
         projectManifestFile = path.join(androidPlatformDir,
             'AndroidManifest.xml'),
         xwalk64bit = "xwalk64bit",
         xwalkLiteVersion = "",
         specificVersion = false;
+
+    if (fs.existsSync(androidPlatformDir + 'app/src/main/res/xml/config.xml')) {
+        // cordova-android >= 7.0.0
+        platformConfigurationFile = path.join(androidPlatformDir, 'app', 'src', 'main', 'res', 'xml', 'config.xml');
+    } else {
+        // cordova-android < 7.0.0
+        platformConfigurationFile = path.join(androidPlatformDir, 'res', 'xml', 'config.xml');
+    }
 
     /** Init */
     var CordovaConfig = new ConfigParser(platformConfigurationFile);
