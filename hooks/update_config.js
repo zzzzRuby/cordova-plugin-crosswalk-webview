@@ -32,12 +32,15 @@ module.exports = function(context) {
         xwalkLiteVersion = "",
         specificVersion = false;
 
-    if (fs.existsSync(androidPlatformDir + 'app/src/main/res/xml/config.xml')) {
+    var oldConfigXMLLocation = path.join(androidPlatformDir, 'res', 'xml', 'config.xml');
+    var newConfigXMLLocation = path.join(androidPlatformDir, 'app', 'src', 'main', 'res', 'xml', 'config.xml');
+
+    if (fs.existsSync(newConfigXMLLocation)) {
         // cordova-android >= 7.0.0
-        platformConfigurationFile = path.join(androidPlatformDir, 'app', 'src', 'main', 'res', 'xml', 'config.xml');
+        platformConfigurationFile = newConfigXMLLocation;
     } else {
         // cordova-android < 7.0.0
-        platformConfigurationFile = path.join(androidPlatformDir, 'res', 'xml', 'config.xml');
+        platformConfigurationFile = oldConfigXMLLocation;
     }
 
     /** Init */
