@@ -17,148 +17,24 @@
        under the License.
 */
 
-def EMBEDDED_MODE = "embedded"
-def SHARED_MODE = "shared"
-def LITE_MODE = "lite"
-def DEFAULT_GROUP_ID = "org.xwalk:"
-def SHARED_ARTIFACT_ID = "xwalk_shared_library:"
-def EMBEDD_ARTIFACT_ID = "xwalk_core_library:"
-def CANARY_ARTIFACT_ID = "xwalk_core_library_canary:"
-def BIT_64 = ":64bit@aar"
-def DEFAULT_MIN_SDK_VERSION = 14
-
-def getConfigPreference(name) {
-    name = name.toLowerCase()
-
-    def xml
-
-    if (file("src/main/res/xml/config.xml").exists()) {
-        // cordova-android >= 7.0.0
-        xml = file("src/main/res/xml/config.xml").getText()
-    } else {
-        // cordova-android < 7.0.0
-        xml = file("res/xml/config.xml").getText()
-    }
-
-    // Disable namespace awareness since Cordova doesn't use them properly
-    def root = new XmlParser(false, false).parseText(xml)
-
-    def ret, defaultValue
-    root.preference.each { it ->
-        def attrName = it.attribute("name")
-        if (attrName && attrName.toLowerCase() == name) {
-            if (it.attribute('default') != null) {
-                defaultValue = it.attribute('default');
-            } else {
-                ret = it.attribute("value")
-            }
-        }
-    }
-    return ret ? ret : defaultValue
-}
-
-if (!project.hasProperty('xwalk64bit')) {
-    ext.xwalk64bit = getConfigPreference("xwalk64bit");
-    println xwalk64bit
-}
-if (cdvBuildMultipleApks == null) {
-    ext.xwalkMultipleApk = getConfigPreference("xwalkMultipleApk").toBoolean();
-} else {
-    ext.xwalkMultipleApk = cdvBuildMultipleApks.toBoolean();
-}
-
-def minSdk = getConfigPreference("android-minSdkVersion");
-if (cdvMinSdkVersion == null) {
-    ext.cdvMinSdkVersion = minSdk && Integer.parseInt(minSdk) > DEFAULT_MIN_SDK_VERSION ? minSdk : DEFAULT_MIN_SDK_VERSION;
-} else if (Integer.parseInt('' + cdvMinSdkVersion) < Integer.parseInt(minSdk)) {
-    ext.cdvMinSdkVersion = minSdk;
-}
-
-if (!project.hasProperty('xwalkMode')) {
-    ext.xwalkMode = getConfigPreference("xwalkMode");
-}
-
-
-if (ext.xwalkMode == SHARED_MODE) {
-    // Build one apk at shared mode because the value of
-    // ext.cdvBuildMultipleApks is false by default.
-    xwalk64bit = null;
-} else if (xwalk64bit == null) {
-    // Build embedded 32 bit crosswalk will generate two apks by default.
-    ext.cdvBuildMultipleApks = xwalkMultipleApk;
-}
-
 // Set defaults before project's build-extras.gradle
 if (!project.hasProperty('xwalkVersion')) {
-    ext.xwalkVersion = getConfigPreference("xwalkVersion")
-}
-
-// Set defaults before project's build-extras.gradle
-if (!project.hasProperty('xwalkLiteVersion')) {
-    ext.xwalkLiteVersion = getConfigPreference("xwalkLiteVersion")
+    ext.xwalkVersion = cdvHelpers.getConfigPreference("xwalkVersion")
 }
 
 if (!project.hasProperty('xwalkCommandLine')) {
-    ext.xwalkCommandLine = getConfigPreference("xwalkCommandLine")
+    ext.xwalkCommandLine = cdvHelpers.getConfigPreference("xwalkCommandLine")
 }
 // Apply values after project's build-extras.gradle
 cdvPluginPostBuildExtras.add({
-    def xwalkMavenRepo = 'https://download.01.org/crosswalk/releases/crosswalk/android/maven2';
-    if (xwalkMode == LITE_MODE) {
-        xwalkMavenRepo = 'https://download.01.org/crosswalk/releases/crosswalk-lite/android/maven2';
-    }
     repositories {
       maven {
-        url xwalkMavenRepo
+        url 'https://download.01.org/crosswalk/releases/crosswalk/android/maven2'
       }
     }
 
-    android {
-        if (xwalk64bit != null) {
-            productFlavors {
-                x86_64 {
-                    versionCode defaultConfig.versionCode + 6
-                    ndk {
-                       abiFilters "x86_64", ""
-                    }
-                }
-                arm64 {
-                    versionCode defaultConfig.versionCode + 9
-                    ndk {
-                        abiFilters "arm64-v8a", ""
-                    }
-                }
-            }
-        }
-    }
-
-    def xwalkSpec = xwalkVersion
-    if (ext.xwalkMode == LITE_MODE) {
-        xwalkSpec = xwalkLiteVersion;
-    }
-
-    if ((xwalkSpec =~ /:/).count == 1) {
-        xwalkSpec = DEFAULT_GROUP_ID + xwalkSpec
-    } else if ((xwalkSpec =~ /:/).count == 0) {
-        if (xwalkSpec ==~ /\d+/) {
-            xwalkSpec = "${xwalkSpec}+"
-        }
-
-        def artifactid = EMBEDD_ARTIFACT_ID;
-        if (ext.xwalkMode == SHARED_MODE) {
-            artifactid = SHARED_ARTIFACT_ID;
-        } else if (ext.xwalkMode == LITE_MODE) {
-            artifactid = CANARY_ARTIFACT_ID;
-        }
-        xwalkSpec = DEFAULT_GROUP_ID + artifactid + xwalkSpec
-    }
-    if (xwalk64bit != null) {
-        xwalkSpec = xwalkSpec + BIT_64
-    }
-    println xwalkSpec
-
     dependencies {
-        implementation xwalkSpec
+        implementation "org.xwalk:xwalk_core_library:" + xwalkVersion
     }
 
     if (file('assets/xwalk-command-line').exists()) {
