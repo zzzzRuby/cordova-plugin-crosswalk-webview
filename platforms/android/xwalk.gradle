@@ -19,11 +19,11 @@
 
 // Set defaults before project's build-extras.gradle
 if (!project.hasProperty('xwalkVersion')) {
-    ext.xwalkVersion = cdvHelpers.getConfigPreference("xwalkVersion")
+    ext.xwalkVersion = cdvHelpers.getConfigPreference("xwalkVersion", "23+")
 }
 
 if (!project.hasProperty('xwalkCommandLine')) {
-    ext.xwalkCommandLine = cdvHelpers.getConfigPreference("xwalkCommandLine")
+    ext.xwalkCommandLine = cdvHelpers.getConfigPreference("xwalkCommandLine", "")
 }
 // Apply values after project's build-extras.gradle
 cdvPluginPostBuildExtras.add({
